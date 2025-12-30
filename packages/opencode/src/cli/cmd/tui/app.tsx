@@ -2,7 +2,19 @@ import { render, useKeyboard, useRenderer, useTerminalDimensions } from "@opentu
 import { Clipboard } from "@tui/util/clipboard"
 import { TextAttributes } from "@opentui/core"
 import { RouteProvider, useRoute } from "@tui/context/route"
-import { Switch, Match, createEffect, untrack, ErrorBoundary, createSignal, onMount, batch, Show, on } from "solid-js"
+import {
+  Switch,
+  Match,
+  createEffect,
+  untrack,
+  ErrorBoundary,
+  createSignal,
+  onMount,
+  onCleanup,
+  batch,
+  Show,
+  on,
+} from "solid-js"
 import { Installation } from "@/installation"
 import { Global } from "@/global"
 import { Flag } from "@/flag/flag"
@@ -178,6 +190,33 @@ function App() {
   const sync = useSync()
   const exit = useExit()
   const promptRef = usePromptRef()
+
+  // Double Ctrl+C to exit - first press shows warning, second press within timeout exits
+  const [pendingExit, setPendingExit] = createSignal(false)
+  let exitTimeout: NodeJS.Timeout | undefined
+
+  useKeyboard((evt) => {
+    if (evt.ctrl && evt.name === "c") {
+      if (pendingExit()) {
+        exit()
+        return
+      }
+      setPendingExit(true)
+      toast.show({
+        message: "Press Ctrl+C again to exit",
+        variant: "warning",
+        duration: 3000,
+      })
+      if (exitTimeout) clearTimeout(exitTimeout)
+      exitTimeout = setTimeout(() => {
+        setPendingExit(false)
+      }, 3000)
+    }
+  })
+
+  onCleanup(() => {
+    if (exitTimeout) clearTimeout(exitTimeout)
+  })
 
   // Wire up console copy-to-clipboard via opentui's onCopySelection callback
   renderer.console.onCopySelection = async (text: string) => {
