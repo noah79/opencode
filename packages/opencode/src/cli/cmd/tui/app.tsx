@@ -104,27 +104,6 @@ export function tui(input: { url: string; args: Args; onExit?: () => Promise<voi
       resolve()
     }
 
-    // Double Ctrl+C to exit - intercept SIGINT before render
-    let pendingExit = false
-    let exitTimeout: NodeJS.Timeout | undefined
-
-    const sigintHandler = () => {
-      if (pendingExit) {
-        process.off("SIGINT", sigintHandler)
-        onExit()
-        return
-      }
-      pendingExit = true
-      // Can't use toast here since we're outside React - write directly to stderr
-      process.stderr.write("\x1b[33m⚠ Press Ctrl+C again to exit\x1b[0m\n")
-      if (exitTimeout) clearTimeout(exitTimeout)
-      exitTimeout = setTimeout(() => {
-        pendingExit = false
-      }, 3000)
-    }
-
-    process.on("SIGINT", sigintHandler)
-
     render(
       () => {
         return (
