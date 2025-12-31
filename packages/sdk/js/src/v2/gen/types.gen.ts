@@ -1309,6 +1309,18 @@ export type ProviderConfig = {
       provider?: {
         npm: string
       }
+      /**
+       * Variant-specific configuration
+       */
+      variants?: {
+        [key: string]: {
+          /**
+           * Disable this variant for the model
+           */
+          disabled?: boolean
+          [key: string]: unknown | boolean | undefined
+        }
+      }
     }
   }
   whitelist?: Array<string>
@@ -1639,6 +1651,10 @@ export type Config = {
      * Continue the agent loop when a tool call is denied
      */
     continue_loop_on_deny?: boolean
+    /**
+     * Timeout in milliseconds for model context protocol (MCP) requests
+     */
+    mcp_timeout?: number
   }
 }
 
@@ -1717,11 +1733,6 @@ export type Command = {
   subtask?: boolean
 }
 
-export type Variant = {
-  disabled: boolean
-  [key: string]: unknown | boolean
-}
-
 export type Model = {
   id: string
   providerID: string
@@ -1786,7 +1797,9 @@ export type Model = {
   }
   release_date: string
   variants?: {
-    [key: string]: Variant
+    [key: string]: {
+      [key: string]: unknown
+    }
   }
 }
 
@@ -3496,6 +3509,11 @@ export type ProviderListResponses = {
           }
           provider?: {
             npm: string
+          }
+          variants?: {
+            [key: string]: {
+              [key: string]: unknown
+            }
           }
         }
       }
